@@ -1,19 +1,11 @@
-name: mc866-pf
+name: mc886-pf
 
 channels:
-  - intel
   - conda-forge
 
 dependencies:
-  - pip
   - python=3.8
-  - cudnn
-  - cudatoolkit=11.0
-  - numpy=1.19
-  - jupyterlab
   - ipython
-  - pathlib
-
-  - pip:
-    - openvino
-    - openvino-dev[tensorflow2,caffe,pytorch,onnx]
+  - jupyterlab
+  - tensorflow-gpu=2.8
+  - matplotlib
