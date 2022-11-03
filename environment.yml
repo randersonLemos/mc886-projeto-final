@@ -8,4 +8,5 @@ dependencies:
   - ipython
   - jupyterlab
   - tensorflow-gpu=2.8
+  - scikit-learn
   - matplotlib
