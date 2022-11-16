@@ -7,6 +7,7 @@ dependencies:
   - python=3.8
   - ipython
   - jupyterlab
+  - cudatoolkit=11
   - tensorflow-gpu=2.8
   - scikit-learn
   - matplotlib
