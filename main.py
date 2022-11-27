@@ -3,7 +3,11 @@ import cv2
 import time
 import copy
 import queue
+import numpy as np
+import tensorflow as tf
 from threading import Thread
+from tensorflow.keras import layers
+from tensorflow.keras import regularizers
 from openvino.inference_engine import IECore
 
 
@@ -86,6 +90,24 @@ class FaceDetector:
        return bboxs, confs
 
 
+class FaceEmotion:
+    def __init__(self, path):
+
+        self.model = tf.keras.models.load_model(path)
+
+        self.class_names = ['anger', 'contempt', 'disgust', 'fear', 'happiness', 'neutrality', 'sadness', 'surprise']    
+
+
+    def emotion(self, face):
+        face = cv2.resize(copy.copy(face), (224, 224), interpolation = cv2.INTER_AREA)
+
+        #face = cv2.cvtColor(face, cv2.COLOR_BGR2GRAY)
+
+        face = np.expand_dims(face, 0)
+        pred = self.model(face)
+        return self.class_names[np.argmax(pred)]
+
+
 class Designer:
     @classmethod
     def draw_bbox(cls, frame, bboxs):
@@ -107,32 +129,59 @@ class Designer:
 
 
     @classmethod
-    def add_crop(cls, frame, crops):
+    def draw_crop(cls, frame, crops):
         H, W, _ = frame.shape
-        h = 0
+        h = 10
         for crop in crops:
             ch, cw, _ = crop.shape
             if (h + ch) < H:
-                frame[h:ch,0:cw] = crop
-                b = h+1
+                frame[h:ch+h,0:cw] = crop
+                h = h+1
             else:
                 break
         return frame
 
 
+    @classmethod
+    def draw_text(cls, frame, pos, text):
+        frame = copy.copy(frame)
+        cv2.putText(frame, text, pos
+                    , cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255,), 3
+                    , cv2.LINE_AA
+                   )
+        return frame
+
+
+
 if __name__ == '__main__':
     fd = FaceDetector(confidence=0.5)
+    fe = FaceEmotion('transferlearn_model_v1/model')
+    fe.model.summary()
 
-    #cap = cv2.VideoCapture('video001.mp4')
+    fourcc = cv2.VideoWriter_fourcc(*'MP4V')
+    out = cv2.VideoWriter('video/output.mp4', fourcc, 15.0, (640,480))
+
     cap = cv2.VideoCapture(0)
     while True:
-        _, frame = cap.read()
+        ret, frame = cap.read()
 
-        bboxs, confs = fd.bbox(frame)
-        frame = Designer.draw_bbox(frame, bboxs)
-        crops = Designer.crop_bbox(frame, bboxs)
-        frame = Designer.add_crop(frame, crops)
-        cv2.imshow('frame', frame)
-        cv2.waitKey(2)
+        if ret:
+            bboxs, confs = fd.bbox(frame)
+            frame = Designer.draw_bbox(frame, bboxs)
+            crops = Designer.crop_bbox(frame, bboxs)
+            if crops:
+                face = crops[0]
+                emotion = fe.emotion(face)
 
-        
+                frame = Designer.draw_crop(frame, crops)
+                frame = Designer.draw_text(frame, (10,30,), emotion) 
+
+                out.write(frame)
+                cv2.imshow('frame', frame)
+                c = cv2.waitKey(1)
+                if c & 0xFF == ord('q'):
+                    break
+
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
