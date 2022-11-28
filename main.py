@@ -155,11 +155,11 @@ class Designer:
 
 if __name__ == '__main__':
     fd = FaceDetector(confidence=0.5)
-    fe = FaceEmotion('transferlearn_model_v1/model')
+    fe = FaceEmotion('saved_transferlearn_model_v1/model')
     fe.model.summary()
 
     fourcc = cv2.VideoWriter_fourcc(*'MP4V')
-    out = cv2.VideoWriter('video/output.mp4', fourcc, 15.0, (640,480))
+    out = cv2.VideoWriter('videos/transferlearn_model_v1.mp4', fourcc, 15.0, (640,480))
 
     cap = cv2.VideoCapture(0)
     while True:
